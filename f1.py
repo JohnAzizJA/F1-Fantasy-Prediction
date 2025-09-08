@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import fastf1 as f1
 import requests
+import os
 
 f1.Cache.enable_cache('fastf1cache')
 
@@ -82,3 +83,33 @@ def get_constructor_standings(season):
         })
         
     return pd.DataFrame(rows)
+
+def get_laptimes(season, event, session):
+    try:
+        session = f1.get_session(season, event, session)
+        session.load()
+        df = session.laps.copy()
+        
+        df = df[['Driver', 'DriverNumber', 'Team', 'LapNumber', 'LapTime', 'Position', 'Sector1Time', 'Sector2Time', 'Sector3Time', 'Stint']]
+        df.rename(columns={
+            'Driver': 'driver',
+            'DriverNumber': 'car_number',
+            'Team': 'constructor',
+            'LapNumber': 'lap_number',
+            'LapTime': 'lap_time',
+            'Position': 'position',
+            'Sector1Time': 'sector1',
+            'Sector2Time': 'sector2',
+            'Sector3Time': 'sector3',
+            'Stint': 'stint'
+        }, inplace=True)
+        
+        df['season'] = season
+        df['event'] = event
+        df['session_type'] = session
+        
+        return df
+    
+    except Exception as e:
+        print(f"Skipping lap times {season} {event} {session}: {e}")
+        return None

@@ -5,9 +5,9 @@ import requests
 
 f1.Cache.enable_cache('fastf1cache')
 
-base_url = "https://api.jolpi.ca/f1"
+base_url = "https://api.jolpi.ca/ergast/f1"
 
-def get_results(season, event, session):
+def get_session_results(season, event, session):
     try:
         session = f1.get_session(season, event, session)
         session.load()
@@ -43,3 +43,42 @@ def get_results(season, event, session):
         print(f"Skipping {season} {event} {session}: {e}")
         return None
 
+def get_driver_standings(season):
+    url = f"{base_url}/{season}/driverstandings.json"
+    response = requests.get(url)
+    data = response.json()
+    
+    standings = data['MRData']['StandingsTable']['StandingsLists'][0]['DriverStandings']
+    
+    rows = []
+    for driver in standings:
+        rows.append({
+            "season": season,
+            "driver": driver["code"],
+            "car_number": driver["permanentNumber"],
+            "constructor": driver["Constructors"][0]["name"],
+            "position": driver["position"],
+            "points": driver["points"],
+            "wins": driver["wins"],
+        })
+    
+    return pd.DataFrame(rows)
+
+def get_constructor_standings(season):
+    url = f"{base_url}/{season}/constructorstandings.json"
+    response = requests.get(url)
+    data = response.json()
+    
+    standings = data['MRData']['StandingsTable']['StandingsLists'][0]['ConstructorStandings']
+    
+    rows = []
+    for constructor in standings:
+        rows.append({
+            "season": season,
+            "constructor": constructor["name"],
+            "position": constructor["position"],
+            "points": constructor["points"],
+            "wins": constructor["wins"],
+        })
+        
+    return pd.DataFrame(rows)

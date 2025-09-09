@@ -8,13 +8,13 @@ f1.Cache.enable_cache('fastf1cache')
 
 base_url = "https://api.jolpi.ca/ergast/f1"
 
-def get_session_results(season, event, session):
+def get_session_results(season, event, session_type):
     try:
-        session = f1.get_session(season, event, session)
+        session = f1.get_session(season, event, session_type)
         session.load()
         df = session.results.copy()
         
-        if session == 'R' or session == 'S':
+        if session_type in ['R', 'S']:
             df = df[['DriverNumber', 'Abbreviation', 'TeamName', 'Position', 'GridPosition', 'Status']]
             df.rename(columns={
                 'DriverNumber': 'car_number',
@@ -25,7 +25,7 @@ def get_session_results(season, event, session):
                 'Status': 'status'
             }, inplace=True)
             
-        elif session == 'Q' or session == 'SQ':
+        elif session_type in ['Q', 'SQ']:
             df = df[['DriverNumber', 'Abbreviation', 'TeamName', 'Q1', 'Q2', 'Q3', 'Position']]
             df.rename(columns={
                 'DriverNumber': 'car_number',
@@ -36,12 +36,12 @@ def get_session_results(season, event, session):
             
         df['season'] = season
         df['event'] = event
-        df['session_type'] = session
+        df['session_type'] = session_type
         
         return df
             
     except Exception as e:
-        print(f"Skipping {season} {event} {session}: {e}")
+        print(f"Skipping {season} {event} {session_type}: {e}")
         return None
 
 def get_driver_standings(season):
@@ -55,8 +55,8 @@ def get_driver_standings(season):
     for driver in standings:
         rows.append({
             "season": season,
-            "driver": driver["code"],
-            "car_number": driver["permanentNumber"],
+            "driver": driver["Driver"]["code"],
+            "car_number": driver["Driver"]["permanentNumber"],
             "constructor": driver["Constructors"][0]["name"],
             "position": driver["position"],
             "points": driver["points"],
@@ -76,7 +76,7 @@ def get_constructor_standings(season):
     for constructor in standings:
         rows.append({
             "season": season,
-            "constructor": constructor["name"],
+            "constructor": constructor["Constructor"]["name"],
             "position": constructor["position"],
             "points": constructor["points"],
             "wins": constructor["wins"],
@@ -84,9 +84,9 @@ def get_constructor_standings(season):
         
     return pd.DataFrame(rows)
 
-def get_laptimes(season, event, session):
+def get_laptimes(season, event, session_type):
     try:
-        session = f1.get_session(season, event, session)
+        session = f1.get_session(season, event, session_type)
         session.load()
         df = session.laps.copy()
         
@@ -113,3 +113,4 @@ def get_laptimes(season, event, session):
     except Exception as e:
         print(f"Skipping lap times {season} {event} {session}: {e}")
         return None
+

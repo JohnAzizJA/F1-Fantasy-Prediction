@@ -113,4 +113,28 @@ def get_laptimes(season, event, session_type):
     except Exception as e:
         print(f"Skipping lap times {season} {event} {session}: {e}")
         return None
+    
+def get_pitstops(season):
+    race_count = f1.get_event_schedule(season).RoundNumber.max()
+    
+    stops = []
+    
+    for rnd in range(1, race_count + 1):
+        url = f"{base_url}/{season}/{rnd}/pitstops.json"
+        response = requests.get(url)
+        data = response.json()
+
+        race = data['MRData']['RaceTable']['Races'][0]
+        
+        for stop in race.get('PitStops', []):
+            stops.append({
+                "season": season,
+                "race": race['raceName'],
+                "driver": stop["driverId"],
+                "stop": int(stop["stop"]),
+                "lap": int(stop["lap"]),
+                "duration": float(stop["duration"])
+            })
+    
+    return pd.DataFrame(stops)
 

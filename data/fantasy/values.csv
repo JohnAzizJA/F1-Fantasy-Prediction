@@ -1,0 +1,31 @@
+name,type,team,value
+PIA,driver,Mclaren,27.0
+NOR,driver,Mclaren,31.2
+VER,driver,Red Bull,28.2
+TSU,driver,Red Bull,10.0
+RUS,driver,Mercedes,22.6
+ANT,driver,Mercedes,15.1
+HAM,driver,Ferrari,23.2
+LEC,driver,Ferrari,23.3
+SAI,driver,Williams,5.1
+ALB,driver,Williams,12.4
+STR,driver,Aston Martin,10.5
+ALO,driver,Aston Martin,7.9
+GAS,driver,Alpine,4.5
+COL,driver,Alpine,4.5
+HUL,driver,Sauber,9.2
+BOR,driver,Sauber,5.7
+BEA,driver,Haas,6.7
+OCO,driver,Haas,8.5
+LAW,driver,Racing Bulls,5.3
+HAD,driver,Racing Bulls,6.3
+Mclaren,constructor,,34.8
+Red Bull,constructor,,29.0
+Mercedes,constructor,,26.3
+Ferrari,constructor,,30.5
+Williams,constructor,,16.7
+Aston Martin,constructor,,12.5
+Alpine,constructor,,7.9
+Sauber,constructor,,10.5
+Haas,constructor,,12.6
+Racing Bulls,constructor,,12.4

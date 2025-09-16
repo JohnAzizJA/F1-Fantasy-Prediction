@@ -138,3 +138,30 @@ def get_pitstops(season):
     
     return pd.DataFrame(stops)
 
+def get_weather_data(season, event, session_type):
+    try:
+        session = f1.get_session(season, event, session_type)
+        session.load()
+        
+        df = session.weather_data.copy()
+        
+        df.rename(columns={
+            'Time': 'time',
+            'AirTemp': 'air_temp_c',
+            'TrackTemp': 'track_temp_c',
+            'Humidity': 'humidity_pct',
+            'Rainfall': 'rainfall',
+            'WindSpeed': 'wind_speed_kph',
+            'WindDirection': 'wind_dir_deg'
+        }, inplace=True)
+        
+        df['season'] = season
+        df['event'] = event
+        df['session_type'] = session_type
+        
+        return df
+        
+    except Exception as e:
+        print(f"Skipping weather {season} {event} {session_type}: {e}")
+        return None
+    

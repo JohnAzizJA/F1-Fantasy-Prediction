@@ -206,16 +206,21 @@ def get_pitstops(season):
             response = requests.get(url)
             data = response.json()
 
-            race = data['MRData']['RaceTable']['Races'][0]
+            races = data['MRData']['RaceTable']['Races']
+            
+            if not races:
+                continue
+            
+            race = races[0]
             
             for stop in race.get('PitStops', []):
                 stops.append({
                     "season": season,
                     "race": race['raceName'],
                     "driver": stop["driverId"],
-                    "stop": int(stop["stop"]),
-                    "lap": int(stop["lap"]),
-                    "duration": float(stop["duration"].replace('s', ''))
+                    "stop": stop["stop"],
+                    "lap_number": stop["lap"],
+                    "duration": stop["duration"],
                 })
         
         return pd.DataFrame(stops)
@@ -266,7 +271,7 @@ def get_race_events(season, event):
             'Message': 'message',
             'Flag': 'flag',
             'Scope': 'scope',
-            'Lap': 'lap'
+            'Lap': 'lap_number'
         }, inplace=True)
         
         df['season'] = season
@@ -320,7 +325,7 @@ def collect_data(seasons, base_dir = "data/raw"):
             event_format = event['EventFormat']
             
             df = get_laptimes(season, event_name)
-            laptimes.appemd(df)
+            laptimes.append(df)
             
             df = get_race_events(season, event_name)
             race_events.append(df)

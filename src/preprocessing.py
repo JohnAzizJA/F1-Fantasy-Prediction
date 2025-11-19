@@ -176,7 +176,6 @@ def clean_schedule_info(df):
     
     df['date'] = pd.to_datetime(df['date'], errors='coerce')
     df['round'] = pd.to_numeric(df['round'], errors='coerce')
-    df['race_laps'] = pd.to_numeric(df['race_laps'], errors='coerce')
     df['event'] = df['event'].str.strip()
     df['country'] = df['country'].str.strip()
     df['location'] = df['location'].str.strip()

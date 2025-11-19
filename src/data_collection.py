@@ -54,25 +54,21 @@ def get_constructors(season):
 
 def get_schedule_info(season):
     try:
-        schedule = f1.get_event_schedule(season)
-        rows = []
+        df = f1.get_event_schedule(season)
         
-        for _, event in schedule.iterrows():
-                session = f1.get_session(season, event['EventName'], 'R')
-                session.load()
-                
-                rows.append({
-                    "season": season,
-                    "round": event['RoundNumber'],
-                    "event": event['EventName'],
-                    "country": event['Country'],
-                    "location": event['Location'],
-                    "date": event['EventDate'],
-                    "format": event['EventFormat'],
-                    "race_laps": session.total_laps,
-                })
-                
-        return pd.DataFrame(rows)
+        df = df[['RoundNumber', 'EventName', 'Country', 'Location', 'EventDate', 'EventFormat']]
+        df.rename(columns={
+            'RoundNumber': 'round',
+            'EventName': 'event',
+            'Country': 'country',
+            'Location': 'location',
+            'EventDate': 'date',
+            'EventFormat': 'format'
+        }, inplace=True)
+        
+        df['season'] = season
+        
+        return df
     
     except Exception as e:
         print(f"Skipping schedule info {season}: {e}")

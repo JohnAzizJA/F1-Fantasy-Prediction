@@ -68,12 +68,13 @@ CONSTRUCTOR_CORRECTIONS = {
         'ALPINE F1 TEAM',
         'BWT ALPINE F1 TEAM',
     ],
-    'ALPHATAURI': [
+    'VCARB': [
         'ALPHATAURI',
         'SCUDERIA ALPHATAURI',
         'RB',
         'VISA CASH APP RB F1 TEAM',
         'RB F1 TEAM',
+        'RACING BULLS',
     ],
     'ALFA ROMEO': [
         'ALFA ROMEO',
@@ -100,7 +101,7 @@ def load_inspect(filename, season):
     path = os.path.join(RAW_DIR, str(season), filename)
     
     if not os.path.exists(path):
-        print(f"⚠️ File not found: {path}")
+        print(f"File not found: {path}")
         return None
     
     try:
@@ -122,7 +123,7 @@ def load_inspect(filename, season):
         return df
     
     except Exception as e:
-        print(f"❌ Error loading {filename}: {e}")
+        print(f"Error loading {filename}: {e}")
         return None
 
 def standardize_driver_names(df, driver_col = 'driver'):

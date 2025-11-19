@@ -11,16 +11,18 @@ def load_inspect(filename, season):
     
     print(f"INSPECTING DATA FROM: {filename}\n")
     
-    print(f"Dataset Shape: {df.shape}\n")
+    print(f"Total Rows: {len(df)}\n")
+    print(f"Total Columns: {len(df.columns)}\n")
     print(f"Columns: {df.columns.tolist()}\n")
-    print(f"First few rows:\n")
+    print(f"First few rows: -\n")
     print(df.head())
     
-    print(f"\nData Types:\n")
+    print(f"\nData Types: -\n")
     print(df.dtypes)
     
     print(f"\nMissing Values:\n")
-    print(df.isnull().sum())
+    print(f"Columns with missing values: {df.isnull().any().sum()}\n")
+    print(f"Total missing values: {df.isnull().sum().sum()}\n")
     
     return df
 
@@ -83,7 +85,15 @@ def clean_schedule_info(df):
         print("No schedule data to clean")
         return None
     
-    # TODO: Clean schedule information
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df['round'] = pd.to_numeric(df['round'], errors='coerce')
+    df['race_laps'] = pd.to_numeric(df['race_laps'], errors='coerce')
+    df['event'] = df['event'].str.strip()
+    df['country'] = df['country'].str.strip()
+    df['location'] = df['location'].str.strip()
+    df['format'] = df['format'].str.strip()
+    
+    return df
     
 def clean_results(df, type):
     if df is None or df.empty:
@@ -93,15 +103,19 @@ def clean_results(df, type):
     df = standardize_constructor_names(df, 'constructor')
     df = standardize_driver_names(df, 'driver')
     
-    df['finish_pos'] = pd.to_numeric(df['finish_pos'], errors='coerce')
+    # Handle position status
+    df['finish_pos_numeric'] = pd.to_numeric(df['finish_pos'], errors='coerce')
+    df['did_not_finish'] = df['finish_pos'].isin(['DNF', 'DNS', 'DSQ', 'Retired'])
+    df['lapped'] = df['finish_pos'].str.contains('Lapped', na=False)
+    df['finished'] = df['finish_pos'].str.contains('Finished', na=False)
+    
     df['event'] = df['event'].str.strip()
     df['car_number'] = pd.to_numeric(df['car_number'], errors='coerce')
     
     if type in ['R', 'S']:
         df['grid_pos'] = pd.to_numeric(df['grid_pos'], errors='coerce')
-        df['Status'] = df['Status'].str.strip()
+        df['status'] = df['status'].str.strip()
     elif type in ['Q', 'SQ', 'SS']:
-        df['finish_pos'] = pd.to_numeric(df['finish_pos'], errors='coerce')
         for q_col in ['Q1', 'Q2', 'Q3']:
             if q_col in df.columns:
                 df[f'{q_col}_seconds'] = pd.to_timedelta(df[q_col], errors='coerce').dt.total_seconds()
@@ -129,11 +143,6 @@ def clean_laptimes(df):
     
     if 'tyre_compound' in df.columns:
         df['tyre_compound'] = df['tyre_compound'].str.upper().str.strip()
-        
-    if 'lap_time_seconds' in df.columns:
-        outliers = df['lap_time_seconds'] > 200
-        print(f"\nRemoving {outliers.sum()} outlier laps (>200s)")
-        df = df[~outliers]
         
     return df
 
@@ -172,4 +181,13 @@ def clean_race_events(df):
         print("No race events data to clean")
         return None
     
-    # TODO: Clean race events
+    df['time'] = pd.to_timedelta(df['time'], errors='coerce')
+    df['lap_number'] = pd.to_numeric(df['lap_number'], errors='coerce')
+    df['category'] = df['category'].str.strip()
+    df['flag'] = df['flag'].str.strip()
+    df['scope'] = df['scope'].str.strip()
+    
+    return df
+
+def handle_missing_values(df):
+    pass

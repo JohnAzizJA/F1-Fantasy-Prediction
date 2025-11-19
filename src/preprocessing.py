@@ -141,8 +141,8 @@ def clean_laptimes(df):
     for col in ['lap_time', 'sector1', 'sector2', 'sector3']:
         if col in df.columns:
             df[f'{col}_seconds'] = pd.to_timedelta(df[col], errors='coerce').dt.total_seconds()
-            # Remove invalid times (negative, zero, or unrealistic)
-            df[f'{col}_valid'] = (df[f'{col}_seconds'] > 0) & (df[f'{col}_seconds'] < 300)
+            # Handle NaT and invalid times
+            df[f'{col}_valid'] = (df[f'{col}_seconds'].notna()) & (df[f'{col}_seconds'] > 0) & (df[f'{col}_seconds'] < 300)
             df.loc[~df[f'{col}_valid'], f'{col}_seconds'] = np.nan
             
     df['position'] = pd.to_numeric(df['position'], errors='coerce')

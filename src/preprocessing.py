@@ -113,7 +113,10 @@ def clean_results(df, type):
     df['car_number'] = pd.to_numeric(df['car_number'], errors='coerce')
     
     if type in ['R', 'S']:
+        # Handle grid positions
         df['grid_pos'] = pd.to_numeric(df['grid_pos'], errors='coerce')
+        df['pit_lane_start'] = df['grid_pos'] <= 0
+        df['grid_pos'] = df['grid_pos'].clip(lower=1)
         df['status'] = df['status'].str.strip()
     elif type in ['Q', 'SQ', 'SS']:
         for q_col in ['Q1', 'Q2', 'Q3']:
@@ -134,12 +137,16 @@ def clean_laptimes(df):
     df['car_number'] = pd.to_numeric(df['car_number'], errors='coerce')
     df['lap_number'] = pd.to_numeric(df['lap_number'], errors='coerce')
     
+    # Handle time/duration values
     for col in ['lap_time', 'sector1', 'sector2', 'sector3']:
         if col in df.columns:
             df[f'{col}_seconds'] = pd.to_timedelta(df[col], errors='coerce').dt.total_seconds()
+            # Remove invalid times (negative, zero, or unrealistic)
+            df[f'{col}_valid'] = (df[f'{col}_seconds'] > 0) & (df[f'{col}_seconds'] < 300)
+            df.loc[~df[f'{col}_valid'], f'{col}_seconds'] = np.nan
             
-        df['position'] = pd.to_numeric(df['position'], errors='coerce')
-        df['stint'] = pd.to_numeric(df['stint'], errors='coerce')
+    df['position'] = pd.to_numeric(df['position'], errors='coerce')
+    df['stint'] = pd.to_numeric(df['stint'], errors='coerce')
     
     if 'tyre_compound' in df.columns:
         df['tyre_compound'] = df['tyre_compound'].str.upper().str.strip()
@@ -154,7 +161,12 @@ def clean_pitstops(df):
     df = standardize_driver_names(df, 'driver')
     df['stop'] = pd.to_numeric(df['stop'], errors='coerce')
     df['lap_number'] = pd.to_numeric(df['lap_number'], errors='coerce')
+    
+    # Handle pit stop duration outliers
     df['duration'] = pd.to_numeric(df['duration'], errors='coerce')
+    df['duration_valid'] = (df['duration'] >= 1) & (df['duration'] <= 60)
+    df.loc[~df['duration_valid'], 'duration'] = np.nan
+    
     df['race'] = df['race'].str.strip()
     
     return df
@@ -166,9 +178,24 @@ def clean_weather_data(df):
 
     df['time'] = pd.to_timedelta(df['time'], errors='coerce')
     
-    weather_cols = ['air_temp_c', 'track_temp_c', 'humidity_pct', 'pressure_mbar', 'wind_speed_kph', 'wind_dir_deg']
+    # Handle weather data with realistic ranges
+    if 'air_temp_c' in df.columns:
+        df['air_temp_c'] = pd.to_numeric(df['air_temp_c'], errors='coerce')
+        df['air_temp_c'] = df['air_temp_c'].clip(-50, 80)
     
-    for col in weather_cols:
+    if 'track_temp_c' in df.columns:
+        df['track_temp_c'] = pd.to_numeric(df['track_temp_c'], errors='coerce')
+        df['track_temp_c'] = df['track_temp_c'].clip(-50, 100)
+    
+    if 'humidity_pct' in df.columns:
+        df['humidity_pct'] = pd.to_numeric(df['humidity_pct'], errors='coerce')
+        df['humidity_pct'] = df['humidity_pct'].clip(0, 100)
+    
+    if 'wind_dir_deg' in df.columns:
+        df['wind_dir_deg'] = pd.to_numeric(df['wind_dir_deg'], errors='coerce')
+        df['wind_dir_deg'] = df['wind_dir_deg'] % 360
+    
+    for col in ['pressure_mbar', 'wind_speed_kph']:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce')
             

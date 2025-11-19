@@ -388,7 +388,7 @@ def preprocess_season_data(season):
             
             output_path = os.path.join(processed_season_dir, f"{name}.csv")
             df.to_csv(output_path, index=False)
-            print(f"💾 Saved to: {output_path}")
+            print(f"Saved to: {output_path}")
             
             results[name] = df
         else:

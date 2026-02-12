@@ -352,3 +352,7 @@ def collect_data(seasons, base_dir = "data/raw"):
         pd.concat(quali_results).to_csv(os.path.join(season_dir, "quali_results.csv"), index=False)
         pd.concat(sprint_results).to_csv(os.path.join(season_dir, "sprint_results.csv"), index=False)
         pd.concat(race_results).to_csv(os.path.join(season_dir, "race.csv"), index=False)
+        
+if __name__ == "__main__":
+    seasons = [2025]
+    collect_data(seasons)

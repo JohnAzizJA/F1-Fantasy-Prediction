@@ -398,3 +398,8 @@ def preprocess_season_data(season):
     print(f"\n{'='*70}")
     print(f"PREPROCESSING COMPLETED FOR SEASON {season}")
     print(f"{'='*70}")
+    
+if __name__ == "__main__":
+    seasons = [2025]
+    for season in seasons:
+        preprocess_season_data(season)

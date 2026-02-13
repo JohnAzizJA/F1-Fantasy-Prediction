@@ -6,7 +6,7 @@ RAW_DIR = "data/raw"
 PROCESSED_DIR = "data/processed"
 
 DRIVER_CORRECTIONS = {
-    'VER': ['VER', 'VERSTAPPEN', 'MAX VERSTAPPEN'],
+    'VER': ['VER', 'VERSTAPPEN', 'MAX VERSTAPPEN', 'MAX_VERSTAPPEN'],
     'PER': ['PER', 'PEREZ', 'SERGIO PEREZ'],
     'HAM': ['HAM', 'HAMILTON', 'LEWIS HAMILTON'],
     'RUS': ['RUS', 'RUSSELL', 'GEORGE RUSSELL'],
@@ -29,10 +29,14 @@ DRIVER_CORRECTIONS = {
     'LAW': ['LAW', 'LAWSON', 'LIAM LAWSON'],
     'BEA': ['BEA', 'BEARMAN', 'OLIVER BEARMAN'],
     'COL': ['COL', 'COLAPINTO', 'FRANCO COLAPINTO'],
+    'ANT': ['ANT', 'ANTONELLI', 'KIMI ANTONELLI', 'ANDREA KIMI ANTONELLI'],
+    'HAD': ['HAD', 'HADJAR', 'ISACK HADJAR'],
+    'DOO': ['DOO', 'DOOHAN', 'JACK DOOHAN'],
+    'BOR': ['BOR', 'BORTOLETO', 'GABRIEL BORTOLETO'],
     'VET': ['VET', 'VETTEL', 'SEBASTIAN VETTEL'],
     'LAT': ['LAT', 'LATIFI', 'NICHOLAS LATIFI'],
     'MSC': ['MSC', 'SCHUMACHER', 'MICK SCHUMACHER'],
-    'DEV': ['DEV', 'DE VRIES', 'NYCK DE VRIES'],
+    'DEV': ['DEV', 'DE VRIES', 'NYCK DE VRIES', 'DE_VRIES'],
 }
 
 CONSTRUCTOR_CORRECTIONS = {
@@ -195,11 +199,17 @@ def clean_results(df, type):
     df = standardize_constructor_names(df, 'constructor')
     df = standardize_driver_names(df, 'driver')
     
-    # Handle position status
+    # Handle position and status flags
     df['finish_pos_numeric'] = pd.to_numeric(df['finish_pos'], errors='coerce')
-    df['did_not_finish'] = df['finish_pos'].isin(['DNF', 'DNS', 'DSQ', 'Retired'])
-    df['lapped'] = df['finish_pos'].str.contains('Lapped', na=False)
-    df['finished'] = df['finish_pos'].str.contains('Finished', na=False)
+    if 'status' in df.columns:
+        df['status'] = df['status'].str.strip()
+        df['did_not_finish'] = df['status'].isin(['Retired', 'Did not start', 'Disqualified'])
+        df['lapped'] = df['status'].str.contains('Lapped', na=False)
+        df['finished'] = df['status'].str.contains('Finished', na=False)
+    else:
+        df['did_not_finish'] = False
+        df['lapped'] = False
+        df['finished'] = True
     
     df['event'] = df['event'].str.strip()
     df['car_number'] = pd.to_numeric(df['car_number'], errors='coerce')
@@ -209,8 +219,6 @@ def clean_results(df, type):
         df['grid_pos'] = pd.to_numeric(df['grid_pos'], errors='coerce')
         df['pit_lane_start'] = (df['grid_pos'] <= 0) | df['grid_pos'].isna()
         df['grid_pos'] = df['grid_pos'].clip(lower=1)
-        if 'status' in df.columns:
-            df['status'] = df['status'].str.strip()
     elif type in ['Q', 'SQ', 'SS']:
         for q_col in ['Q1', 'Q2', 'Q3']:
             if q_col in df.columns:
@@ -360,12 +368,14 @@ def preprocess_season_data(season):
     results = {}
     
     datasets = [
-        ('driver_standings', 'driver_standings.csv', clean_standings, {'standings_type': 'driver'}),
-        ('constructor_standings', 'constructor_standings.csv', clean_standings, {'standings_type': 'constructor'}),
+        ('driver_standings', 'driver_standings.csv', clean_standings, {'type': 'driver'}),
+        ('constructor_standings', 'constructor_standings.csv', clean_standings, {'type': 'constructor'}),
         ('schedule', 'schedule.csv', clean_schedule_info, {}),
-        ('race_results', 'race.csv', clean_results, {'session_type': 'R'}),
-        ('quali_results', 'quali_results.csv', clean_results, {'session_type': 'Q'}),
-        ('sprint_results', 'sprint_results.csv', clean_results, {'session_type': 'S'}),
+        ('race_results', 'race.csv', clean_results, {'type': 'R'}),
+        ('quali_results', 'quali_results.csv', clean_results, {'type': 'Q'}),
+        ('sprint_results', 'sprint_results.csv', clean_results, {'type': 'S'}),
+        ('sprint_quali_results', 'sprint_quali_results.csv', clean_results, {'type': 'SQ'}),
+        ('sprint_shootout_results', 'sprint_shootout_results.csv', clean_results, {'type': 'SS'}),
         ('laptimes', 'laptimes.csv', clean_laptimes, {}),
         ('pitstops', 'pitstops.csv', clean_pitstops, {}),
         ('weather', 'weather.csv', clean_weather_data, {}),

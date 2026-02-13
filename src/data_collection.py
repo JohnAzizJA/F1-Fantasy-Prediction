@@ -13,16 +13,16 @@ def get_drivers(season):
         response = requests.get(url)
         data = response.json()
         
-        drivers = data['MRData']['DriverTable']['Drivers']
+        drivers = data.get('MRData', {}).get('DriverTable', {}).get('Drivers', [])
         
         rows = []
         for driver in drivers:
             rows.append({
-                "first_name": driver["givenName"],
-                "last_name": driver["familyName"],
-                "driver": driver["code"],
-                "car_number": driver["permanentNumber"],
-                "nationality": driver["nationality"]
+                "first_name": driver.get("givenName"),
+                "last_name": driver.get("familyName"),
+                "driver": driver.get("code"),
+                "car_number": driver.get("permanentNumber"),
+                "nationality": driver.get("nationality")
             })
             
         return pd.DataFrame(rows)
@@ -37,13 +37,13 @@ def get_constructors(season):
         response = requests.get(url)
         data = response.json()
         
-        constructors = data['MRData']['ConstructorTable']['Constructors']
+        constructors = data.get('MRData', {}).get('ConstructorTable', {}).get('Constructors', [])
         
         rows = []
         for constructor in constructors:
             rows.append({
-                "constructor": constructor["name"],
-                "nationality": constructor["nationality"]
+                "constructor": constructor.get("name"),
+                "nationality": constructor.get("nationality")
             })
             
         return pd.DataFrame(rows)
@@ -56,7 +56,7 @@ def get_schedule_info(season):
     try:
         df = f1.get_event_schedule(season)
         
-        df = df[['RoundNumber', 'EventName', 'Country', 'Location', 'EventDate', 'EventFormat']]
+        df = df[['RoundNumber', 'EventName', 'Country', 'Location', 'EventDate', 'EventFormat']].copy()
         df.rename(columns={
             'RoundNumber': 'round',
             'EventName': 'event',
@@ -116,18 +116,21 @@ def get_driver_standings(season):
         response = requests.get(url)
         data = response.json()
         
-        standings = data['MRData']['StandingsTable']['StandingsLists'][0]['DriverStandings']
+        standings_lists = data.get('MRData', {}).get('StandingsTable', {}).get('StandingsLists', [])
+        standings = standings_lists[0].get('DriverStandings', []) if standings_lists else []
         
         rows = []
         for driver in standings:
+            driver_info = driver.get("Driver", {})
+            constructors = driver.get("Constructors", [{}])
             rows.append({
                 "season": season,
-                "driver": driver["Driver"]["code"],
-                "car_number": driver["Driver"]["permanentNumber"],
-                "constructor": driver["Constructors"][0]["name"],
-                "position": driver["position"],
-                "points": driver["points"],
-                "wins": driver["wins"],
+                "driver": driver_info.get("code"),
+                "car_number": driver_info.get("permanentNumber"),
+                "constructor": constructors[0].get("name") if constructors else None,
+                "position": driver.get("position"),
+                "points": driver.get("points"),
+                "wins": driver.get("wins"),
             })
         
         return pd.DataFrame(rows)
@@ -142,16 +145,18 @@ def get_constructor_standings(season):
         response = requests.get(url)
         data = response.json()
         
-        standings = data['MRData']['StandingsTable']['StandingsLists'][0]['ConstructorStandings']
+        standings_lists = data.get('MRData', {}).get('StandingsTable', {}).get('StandingsLists', [])
+        standings = standings_lists[0].get('ConstructorStandings', []) if standings_lists else []
         
         rows = []
         for constructor in standings:
+            constructor_info = constructor.get("Constructor", {})
             rows.append({
                 "season": season,
-                "constructor": constructor["Constructor"]["name"],
-                "position": constructor["position"],
-                "points": constructor["points"],
-                "wins": constructor["wins"],
+                "constructor": constructor_info.get("name"),
+                "position": constructor.get("position"),
+                "points": constructor.get("points"),
+                "wins": constructor.get("wins"),
             })
             
         return pd.DataFrame(rows)
@@ -202,7 +207,7 @@ def get_pitstops(season):
             response = requests.get(url)
             data = response.json()
 
-            races = data['MRData']['RaceTable']['Races']
+            races = data.get('MRData', {}).get('RaceTable', {}).get('Races', [])
             
             if not races:
                 continue
@@ -212,11 +217,11 @@ def get_pitstops(season):
             for stop in race.get('PitStops', []):
                 stops.append({
                     "season": season,
-                    "race": race['raceName'],
-                    "driver": stop["driverId"],
-                    "stop": stop["stop"],
-                    "lap_number": stop["lap"],
-                    "duration": stop["duration"],
+                    "race": race.get('raceName'),
+                    "driver": stop.get("driverId"),
+                    "stop": stop.get("stop"),
+                    "lap_number": stop.get("lap"),
+                    "duration": stop.get("duration"),
                 })
         
         return pd.DataFrame(stops)
@@ -331,6 +336,8 @@ def collect_data(seasons, base_dir = "data/raw"):
             elif event_format == 'sprint_qualifying':
                 session_types = ['SQ', 'S', 'Q', 'R']
             elif event_format == 'conventional':
+                session_types = ['Q', 'R']
+            else:
                 session_types = ['Q', 'R']
                 
             for session_type in session_types:
